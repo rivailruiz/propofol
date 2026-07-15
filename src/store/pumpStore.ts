@@ -2,11 +2,12 @@ import { create } from 'zustand';
 import {
   stepPk,
   clamp,
-  computeSchniderConstants,
+  computePkConstants,
   INITIAL_PK_STATE,
   DEFAULT_PATIENT,
   type PkState,
   type PatientParams,
+  type PkModel,
 } from '../lib/pk';
 import { ALARM_DEFINITIONS, type ActiveAlarm, type AlarmType } from '../lib/alarms';
 
@@ -30,7 +31,9 @@ interface Config {
   targetStep: number;
   syringeVolumeMax: number; // mL
   maxFlowRateMlH: number; // mL/h
-  /** Covariáveis do paciente virtual usadas pelo modelo de Schnider */
+  /** Modelo farmacocinético usado para simular Cp/Ce */
+  pkModel: PkModel;
+  /** Covariáveis do paciente virtual (Marsh usa só o peso; Schnider usa todas) */
   patient: PatientParams;
 }
 
@@ -77,6 +80,7 @@ export const DEFAULT_CONFIG: Config = {
   targetStep: 0.1,
   syringeVolumeMax: 50,
   maxFlowRateMlH: 1200,
+  pkModel: 'schnider',
   patient: DEFAULT_PATIENT,
 };
 
@@ -176,7 +180,7 @@ export const usePumpStore = create<PumpState>((set, get) => ({
       maxFlowRateMlH: state.config.maxFlowRateMlH,
       syringeRemainingMl: state.syringeRemainingMl,
       infusing,
-      constants: computeSchniderConstants(state.config.patient),
+      constants: computePkConstants(state.config.pkModel, state.config.patient),
     });
 
     const nextSyringeRemaining = Math.max(

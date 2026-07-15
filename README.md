@@ -19,13 +19,26 @@ configuráveis nas Configurações:
   adult volunteers." *Anesthesiology*. 1998;88(5):1170-1182. (V1–V3, Cl1–Cl3)
 - Schnider TW, Minto CF, Shafer SL, et al. "The influence of age on
   propofol pharmacodynamics." *Anesthesiology*. 1999;90(6):1502-1516.
-  (ke0 = 0.456 min⁻¹)
+  (artigo original do ke0)
+- Barakat AR, Sutcliffe N, Schwab M. "Effect site concentration during
+  propofol TCI sedation: a comparison of sedation score with two
+  pharmacokinetic models." *Anaesthesia*. 2007;62(7):661-666.
+  (ke0 = 0.459 min⁻¹, T½ = 1.5 min, valor usado aqui)
 
 Ver [src/lib/pk.ts](src/lib/pk.ts) para a implementação e citações completas,
 e [src/lib/pk.test.ts](src/lib/pk.test.ts) para os testes que conferem os
 coeficientes derivados contra os valores publicados. Mesmo assim, isto
 continua sendo um simulador educacional — não é um dispositivo médico e não
 deve orientar decisões clínicas reais.
+
+> **Nota sobre o Barakat et al. (2007):** esse estudo clínico comparou o
+> modelo de Marsh (plasma) com o de Schnider (local de efeito) em 40
+> pacientes reais e encontrou que as previsões de concentração no local de
+> efeito do **Marsh** correlacionaram melhor com a sedação clínica observada
+> (escore OAAS, índice BIS) do que as do Schnider — em ambos os grupos, mesmo
+> quando a bomba era controlada pelo Schnider. Isso não muda a implementação
+> atual (que segue Schnider), mas é uma limitação conhecida do modelo
+> reconhecida na literatura.
 
 ## Rodando localmente
 

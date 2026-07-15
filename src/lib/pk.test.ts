@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeMarshConstants,
+  computePkConstants,
   computeRequiredFlowRate,
   computeSchniderConstants,
   leanBodyMass,
@@ -39,7 +41,7 @@ describe('computeSchniderConstants', () => {
     expect(c.k13).toBeCloseTo(0.19578, 4);
     expect(c.k21).toBeCloseTo(0.0668, 4);
     expect(c.k31).toBeCloseTo(0.0035126, 6);
-    expect(c.ke0).toBe(0.456); // Schnider 1999
+    expect(c.ke0).toBe(0.459); // Barakat et al. 2007, citando Schnider 1999
   });
 
   it('increases V2 and Cl2 for patients younger than 53 (age covariate)', () => {
@@ -61,6 +63,47 @@ describe('computeSchniderConstants', () => {
     expect(c.k10).toBeGreaterThan(0);
     expect(c.k12).toBeGreaterThan(0);
     expect(c.k21).toBeGreaterThan(0);
+  });
+});
+
+describe('computeMarshConstants', () => {
+  it('reproduces the published Marsh (1991) coefficients for a 70kg patient', () => {
+    // Fonte: Marsh et al. Br J Anaesth 1991;67:41-48 (V1/V2/V3 proporcionais
+    // ao peso; k10–k31 fixos, independentes de idade/altura/sexo).
+    const c = computeMarshConstants({ ageYears: 40, weightKg: 70, heightCm: 170, sex: 'male' });
+    expect(c.v1Ml).toBeCloseTo(0.228 * 70 * 1000, 6); // V1 = 0.228 L/kg
+    expect(c.v2Ml).toBeCloseTo(0.464 * 70 * 1000, 6); // V2 = 0.464 L/kg
+    expect(c.v3Ml).toBeCloseTo(2.89 * 70 * 1000, 6); // V3 = 2.89 L/kg
+    expect(c.k10).toBe(0.119);
+    expect(c.k12).toBe(0.112);
+    expect(c.k13).toBe(0.042);
+    expect(c.k21).toBe(0.055);
+    expect(c.k31).toBe(0.0033);
+    expect(c.ke0).toBe(0.26); // Barakat et al. 2007, citando Marsh 1991
+  });
+
+  it('scales every volume proportionally with weight, unlike Schnider', () => {
+    const light = computeMarshConstants({ ageYears: 40, weightKg: 50, heightCm: 170, sex: 'male' });
+    const heavy = computeMarshConstants({ ageYears: 40, weightKg: 100, heightCm: 170, sex: 'male' });
+    expect(heavy.v1Ml).toBeCloseTo(light.v1Ml * 2, 6);
+    // As constantes de taxa não dependem do peso (só os volumes escalam).
+    expect(heavy.k10).toBe(light.k10);
+  });
+
+  it('ignores age, height and sex entirely (only weight matters)', () => {
+    const a = computeMarshConstants({ ageYears: 25, weightKg: 70, heightCm: 150, sex: 'female' });
+    const b = computeMarshConstants({ ageYears: 80, weightKg: 70, heightCm: 210, sex: 'male' });
+    expect(a).toEqual(b);
+  });
+});
+
+describe('computePkConstants', () => {
+  it('routes to the Marsh or Schnider implementation based on the model argument', () => {
+    const marsh = computePkConstants('marsh', DEFAULT_PATIENT);
+    const schnider = computePkConstants('schnider', DEFAULT_PATIENT);
+    expect(marsh).toEqual(computeMarshConstants(DEFAULT_PATIENT));
+    expect(schnider).toEqual(computeSchniderConstants(DEFAULT_PATIENT));
+    expect(marsh.ke0).not.toBe(schnider.ke0);
   });
 });
 

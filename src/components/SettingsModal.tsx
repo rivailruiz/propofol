@@ -26,6 +26,7 @@ export function SettingsModal() {
       targetStep: clampNumber(draft.targetStep, 0.1, 2),
       syringeVolumeMax: clampNumber(draft.syringeVolumeMax, 10, 100),
       drugConcentrationMgMl: clampNumber(draft.drugConcentrationMgMl, 1, 20),
+      pkModel: draft.pkModel,
       patient: {
         ageYears: clampNumber(draft.patient.ageYears, 18, 100),
         weightKg: clampNumber(draft.patient.weightKg, 30, 150),
@@ -96,14 +97,45 @@ export function SettingsModal() {
 
           <div className="mt-1 border-t border-chassis-600 pt-2.5">
             <p className="mb-2 text-[10px] font-semibold tracking-wide text-gray-500">
-              PACIENTE VIRTUAL (modelo de Schnider)
+              MODELO FARMACOCINÉTICO
+            </p>
+            <label className="flex items-center justify-between gap-3 text-sm text-gray-300">
+              <span className="min-w-0 flex-1">Modelo</span>
+              <div className="flex shrink-0 overflow-hidden rounded-md border border-chassis-500">
+                {(['marsh', 'schnider'] as const).map((model) => (
+                  <button
+                    key={model}
+                    type="button"
+                    disabled={locked}
+                    onClick={() => setDraft((d) => ({ ...d, pkModel: model }))}
+                    className={`px-3 py-1.5 text-xs font-semibold capitalize transition-colors disabled:opacity-40 ${
+                      draft.pkModel === model
+                        ? 'bg-status-info text-chassis-950'
+                        : 'bg-chassis-900 text-gray-300'
+                    }`}
+                  >
+                    {model === 'marsh' ? 'Marsh' : 'Schnider'}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <p className="mt-2 text-[10px] leading-snug text-gray-500">
+              Marsh (1991) usa só o peso; Schnider (1998/1999) também usa
+              idade, altura e sexo. Um estudo clínico (Barakat et al. 2007)
+              encontrou que a previsão de local de efeito do Marsh
+              acompanhou melhor a sedação observada em pacientes reais do
+              que a do Schnider.
+            </p>
+
+            <p className="mb-2 mt-3 text-[10px] font-semibold tracking-wide text-gray-500">
+              PACIENTE VIRTUAL
             </p>
             <div className="flex flex-col gap-2.5">
               <Field
                 label="Idade (anos)"
                 value={draft.patient.ageYears}
                 step={1}
-                disabled={locked}
+                disabled={locked || draft.pkModel === 'marsh'}
                 onChange={(v) =>
                   setDraft((d) => ({ ...d, patient: { ...d.patient, ageYears: v } }))
                 }
@@ -121,7 +153,7 @@ export function SettingsModal() {
                 label="Altura (cm)"
                 value={draft.patient.heightCm}
                 step={1}
-                disabled={locked}
+                disabled={locked || draft.pkModel === 'marsh'}
                 onChange={(v) =>
                   setDraft((d) => ({ ...d, patient: { ...d.patient, heightCm: v } }))
                 }
@@ -133,7 +165,7 @@ export function SettingsModal() {
                     <button
                       key={sex}
                       type="button"
-                      disabled={locked}
+                      disabled={locked || draft.pkModel === 'marsh'}
                       onClick={() =>
                         setDraft((d) => ({ ...d, patient: { ...d.patient, sex } }))
                       }
@@ -150,9 +182,10 @@ export function SettingsModal() {
               </label>
             </div>
             <p className="mt-2 text-[10px] leading-snug text-gray-500">
-              Usadas apenas para calcular os coeficientes farmacocinéticos do
-              paciente simulado (Schnider, 1998/1999) — não é um dado real de
-              paciente.
+              {draft.pkModel === 'marsh'
+                ? 'Marsh só usa o peso — idade, altura e sexo ficam desativados e não afetam o cálculo.'
+                : 'Usadas para calcular os coeficientes farmacocinéticos do paciente simulado.'}{' '}
+              Não é um dado real de paciente.
             </p>
           </div>
         </div>
@@ -168,9 +201,9 @@ export function SettingsModal() {
 
         <p className="text-center text-[10px] leading-snug text-gray-500">
           SIMULADOR EDUCACIONAL — não representa um dispositivo médico real e não deve ser
-          utilizado para decisões clínicas. Farmacocinética baseada no modelo de Schnider
-          (Anesthesiology 1998;88:1170 / 1999;90:1502), com limitações conhecidas fora da
-          faixa adulta típica.
+          utilizado para decisões clínicas. Farmacocinética baseada nos modelos de Marsh
+          (Br J Anaesth 1991;67:41) e Schnider (Anesthesiology 1998;88:1170 /
+          1999;90:1502), com limitações conhecidas fora da faixa adulta típica.
         </p>
       </div>
     </div>

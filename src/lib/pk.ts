@@ -1,19 +1,36 @@
 /**
- * Motor de simulação farmacocinética/farmacodinâmica do propofol,
- * baseado no modelo publicado de Schnider (adultos).
+ * Motor de simulação farmacocinética/farmacodinâmica do propofol.
+ * Suporta dois modelos publicados, selecionáveis pelo usuário: Marsh (1991)
+ * e Schnider (1998/1999) — os mesmos dois modelos usados por bombas TCI
+ * reais (ex.: Diprifusor usa Marsh; bombas mais recentes oferecem Schnider).
  *
  * Fontes:
+ * - Marsh B, White M, Morton N, Kenny GNC. "Pharmacokinetic model driven
+ *   infusion of propofol in children." Br J Anaesth. 1991;67(1):41-48.
+ *   (volumes V1–V3, constantes de taxa k10–k31)
  * - Schnider TW, Minto CF, Gambus PL, et al. "The influence of method
  *   of administration and covariates on the pharmacokinetics of
  *   propofol in adult volunteers." Anesthesiology. 1998;88(5):1170-1182.
  *   (volumes V1–V3, clareamentos Cl1–Cl3)
  * - Schnider TW, Minto CF, Shafer SL, et al. "The influence of age on
  *   propofol pharmacodynamics." Anesthesiology. 1999;90(6):1502-1516.
- *   (constante de equilíbrio do local de efeito, ke0 = 0.456 min⁻¹)
+ *   (artigo original da constante de equilíbrio do local de efeito, ke0)
+ * - Barakat AR, Sutcliffe N, Schwab M. "Effect site concentration during
+ *   propofol TCI sedation: a comparison of sedation score with two
+ *   pharmacokinetic models." Anaesthesia. 2007;62(7):661-666. (fornecido
+ *   pelo usuário em PDF, lido diretamente) — cita ke0 = 0.26 min⁻¹
+ *   (T½ = 2.6 min) para Marsh e ke0 = 0.459 min⁻¹ (T½ = 1.5 min) para
+ *   Schnider; valores usados aqui para os dois modelos. Este mesmo estudo
+ *   clínico (40 pacientes, TCI com alvo de 2 µg/mL) encontrou que as
+ *   previsões de concentração no local de efeito do Marsh correlacionaram
+ *   MELHOR com a sedação clínica observada (escore OAAS, índice BIS) do
+ *   que as do Schnider, em ambos os grupos do estudo — uma limitação
+ *   conhecida do Schnider no controle de local de efeito.
  *
- * Os coeficientes numéricos abaixo foram conferidos em duas revisões
- * secundárias antes de serem usados aqui (o PDF do artigo original não
- * pôde ser lido em texto pelo agente que escreveu este código):
+ * Os coeficientes de volumes/clareamentos de Marsh e Schnider foram
+ * conferidos em revisões secundárias antes de serem usados aqui (os PDFs
+ * dos artigos originais de 1991/1998 não puderam ser lidos em texto pelo
+ * agente que escreveu este código):
  * - "Cross-simulation between two pharmacokinetic models for the
  *   target-controlled infusion of propofol" — https://ekja.org/journal/view.php?number=7311
  * - "Clinical Pharmacokinetics and Pharmacodynamics of Propofol" (PMC) —
@@ -21,14 +38,15 @@
  * Antes de usar estes números fora de um contexto educacional, confira-os
  * diretamente nos artigos originais.
  *
- * IMPORTANTE: mesmo sendo um modelo clínico publicado, esta continua
+ * IMPORTANTE: mesmo sendo modelos clínicos publicados, esta continua
  * sendo uma simulação educacional. O modelo de Schnider é conhecido por
  * se comportar de forma pouco fisiológica em pacientes com covariáveis
- * (peso/altura/idade) muito fora da faixa adulta típica — não representa
- * um dispositivo médico e não deve orientar decisões clínicas reais.
+ * (peso/altura/idade) muito fora da faixa adulta típica — nenhum dos dois
+ * representa um dispositivo médico nem deve orientar decisões clínicas reais.
  */
 
 export type PatientSex = 'male' | 'female';
+export type PkModel = 'marsh' | 'schnider';
 
 export interface PatientParams {
   ageYears: number;
@@ -44,8 +62,12 @@ export const DEFAULT_PATIENT: PatientParams = {
   sex: 'male',
 };
 
-/** Constante de equilíbrio do local de efeito (Schnider 1999), min⁻¹ */
-export const SCHNIDER_KE0 = 0.456;
+/**
+ * Constantes de equilíbrio do local de efeito (ke0), min⁻¹, conforme
+ * citadas em Barakat et al. (Anaesthesia 2007;62:661-666).
+ */
+export const MARSH_KE0 = 0.26; // T½ ≈ 2.6 min
+export const SCHNIDER_KE0 = 0.459; // T½ ≈ 1.5 min
 
 /**
  * Ganho proporcional do controlador da bomba (não faz parte do modelo
@@ -116,6 +138,32 @@ export function computeSchniderConstants(patient: PatientParams): PkConstants {
     k31: cl3 / v3L,
     ke0: SCHNIDER_KE0,
   };
+}
+
+/**
+ * Deriva as constantes do modelo de Marsh para um paciente virtual.
+ * Ao contrário do Schnider, os volumes são proporcionais apenas ao peso e
+ * as constantes de taxa (k10–k31) são fixas — o modelo não usa idade,
+ * altura ou sexo como covariáveis.
+ */
+export function computeMarshConstants(patient: PatientParams): PkConstants {
+  const w = patient.weightKg;
+
+  return {
+    v1Ml: 0.228 * w * 1000,
+    v2Ml: 0.464 * w * 1000,
+    v3Ml: 2.89 * w * 1000,
+    k10: 0.119,
+    k12: 0.112,
+    k13: 0.042,
+    k21: 0.055,
+    k31: 0.0033,
+    ke0: MARSH_KE0,
+  };
+}
+
+export function computePkConstants(model: PkModel, patient: PatientParams): PkConstants {
+  return model === 'marsh' ? computeMarshConstants(patient) : computeSchniderConstants(patient);
 }
 
 export interface PkState {

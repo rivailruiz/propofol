@@ -26,6 +26,9 @@ export function TopBar() {
         <span className="hidden text-[11px] text-gray-400 sm:inline">
           {config.drugConcentrationMgMl} mg/mL
         </span>
+        <span className="hidden rounded border border-chassis-600 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-400 md:inline">
+          {config.pkModel === 'marsh' ? 'MARSH' : 'SCHNIDER'}
+        </span>
       </div>
 
       <div className="flex items-center gap-2.5 sm:gap-3">
