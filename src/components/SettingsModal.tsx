@@ -26,6 +26,12 @@ export function SettingsModal() {
       targetStep: clampNumber(draft.targetStep, 0.1, 2),
       syringeVolumeMax: clampNumber(draft.syringeVolumeMax, 10, 100),
       drugConcentrationMgMl: clampNumber(draft.drugConcentrationMgMl, 1, 20),
+      patient: {
+        ageYears: clampNumber(draft.patient.ageYears, 18, 100),
+        weightKg: clampNumber(draft.patient.weightKg, 30, 150),
+        heightCm: clampNumber(draft.patient.heightCm, 120, 220),
+        sex: draft.patient.sex,
+      },
     });
     toggleSettings(false);
   }
@@ -87,6 +93,68 @@ export function SettingsModal() {
             disabled={locked}
             onChange={(v) => setDraft((d) => ({ ...d, drugConcentrationMgMl: v }))}
           />
+
+          <div className="mt-1 border-t border-chassis-600 pt-2.5">
+            <p className="mb-2 text-[10px] font-semibold tracking-wide text-gray-500">
+              PACIENTE VIRTUAL (modelo de Schnider)
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <Field
+                label="Idade (anos)"
+                value={draft.patient.ageYears}
+                step={1}
+                disabled={locked}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, patient: { ...d.patient, ageYears: v } }))
+                }
+              />
+              <Field
+                label="Peso (kg)"
+                value={draft.patient.weightKg}
+                step={1}
+                disabled={locked}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, patient: { ...d.patient, weightKg: v } }))
+                }
+              />
+              <Field
+                label="Altura (cm)"
+                value={draft.patient.heightCm}
+                step={1}
+                disabled={locked}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, patient: { ...d.patient, heightCm: v } }))
+                }
+              />
+              <label className="flex items-center justify-between gap-3 text-sm text-gray-300">
+                <span className="min-w-0 flex-1">Sexo biológico</span>
+                <div className="flex shrink-0 overflow-hidden rounded-md border border-chassis-500">
+                  {(['male', 'female'] as const).map((sex) => (
+                    <button
+                      key={sex}
+                      type="button"
+                      disabled={locked}
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, patient: { ...d.patient, sex } }))
+                      }
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
+                        draft.patient.sex === sex
+                          ? 'bg-status-info text-chassis-950'
+                          : 'bg-chassis-900 text-gray-300'
+                      }`}
+                    >
+                      {sex === 'male' ? 'M' : 'F'}
+                    </button>
+                  ))}
+                </div>
+              </label>
+            </div>
+            <p className="mt-2 text-[10px] leading-snug text-gray-500">
+              Usadas apenas para calcular os coeficientes farmacocinéticos do
+              paciente simulado (Schnider, 1998/1999) — não é um dado real de
+              paciente.
+            </p>
+          </div>
         </div>
 
         <button
@@ -100,7 +168,9 @@ export function SettingsModal() {
 
         <p className="text-center text-[10px] leading-snug text-gray-500">
           SIMULADOR EDUCACIONAL — não representa um dispositivo médico real e não deve ser
-          utilizado para decisões clínicas.
+          utilizado para decisões clínicas. Farmacocinética baseada no modelo de Schnider
+          (Anesthesiology 1998;88:1170 / 1999;90:1502), com limitações conhecidas fora da
+          faixa adulta típica.
         </p>
       </div>
     </div>

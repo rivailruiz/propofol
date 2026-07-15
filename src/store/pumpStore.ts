@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import { stepPk, clamp, DEFAULT_PK_CONSTANTS, type PkState } from '../lib/pk';
+import {
+  stepPk,
+  clamp,
+  computeSchniderConstants,
+  INITIAL_PK_STATE,
+  DEFAULT_PATIENT,
+  type PkState,
+  type PatientParams,
+} from '../lib/pk';
 import { ALARM_DEFINITIONS, type ActiveAlarm, type AlarmType } from '../lib/alarms';
 
 export type PumpStatus = 'stopped' | 'running' | 'paused';
@@ -22,6 +30,8 @@ interface Config {
   targetStep: number;
   syringeVolumeMax: number; // mL
   maxFlowRateMlH: number; // mL/h
+  /** Covariáveis do paciente virtual usadas pelo modelo de Schnider */
+  patient: PatientParams;
 }
 
 interface PumpState {
@@ -67,9 +77,8 @@ export const DEFAULT_CONFIG: Config = {
   targetStep: 0.1,
   syringeVolumeMax: 50,
   maxFlowRateMlH: 1200,
+  patient: DEFAULT_PATIENT,
 };
-
-const INITIAL_PK: PkState = { cp: 0, cp2: 0, ce: 0 };
 
 function hasCriticalAlarm(alarms: ActiveAlarm[]): boolean {
   return alarms.some((a) => ALARM_DEFINITIONS[a.type].severity === 'critical');
@@ -79,7 +88,7 @@ export const usePumpStore = create<PumpState>((set, get) => ({
   config: DEFAULT_CONFIG,
   status: 'stopped',
   target: 2.0,
-  pk: INITIAL_PK,
+  pk: INITIAL_PK_STATE,
   flowRateMlH: 0,
   infusedVolumeMl: 0,
   elapsedSeconds: 0,
@@ -122,7 +131,7 @@ export const usePumpStore = create<PumpState>((set, get) => ({
     }
     set({
       status: 'stopped',
-      pk: INITIAL_PK,
+      pk: INITIAL_PK_STATE,
       flowRateMlH: 0,
       infusedVolumeMl: 0,
       elapsedSeconds: 0,
@@ -167,7 +176,7 @@ export const usePumpStore = create<PumpState>((set, get) => ({
       maxFlowRateMlH: state.config.maxFlowRateMlH,
       syringeRemainingMl: state.syringeRemainingMl,
       infusing,
-      constants: DEFAULT_PK_CONSTANTS,
+      constants: computeSchniderConstants(state.config.patient),
     });
 
     const nextSyringeRemaining = Math.max(

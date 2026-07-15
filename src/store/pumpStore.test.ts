@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePumpStore, DEFAULT_CONFIG } from './pumpStore';
+import { INITIAL_PK_STATE } from '../lib/pk';
 
 function resetStore() {
   const current = usePumpStore.getState();
@@ -8,7 +9,7 @@ function resetStore() {
     config: DEFAULT_CONFIG,
     status: 'stopped',
     target: 2.0,
-    pk: { cp: 0, cp2: 0, ce: 0 },
+    pk: INITIAL_PK_STATE,
     flowRateMlH: 0,
     infusedVolumeMl: 0,
     elapsedSeconds: 0,
@@ -92,14 +93,14 @@ describe('lifecycle', () => {
       status: 'running',
       elapsedSeconds: 120,
       infusedVolumeMl: 40,
-      pk: { cp: 3, cp2: 1, ce: 2 },
+      pk: { a1: 5000, a2: 1000, a3: 500, cp: 3, ce: 2 },
     });
     usePumpStore.getState().stop();
     const state = usePumpStore.getState();
     expect(state.status).toBe('stopped');
     expect(state.elapsedSeconds).toBe(0);
     expect(state.infusedVolumeMl).toBe(0);
-    expect(state.pk).toEqual({ cp: 0, cp2: 0, ce: 0 });
+    expect(state.pk).toEqual(INITIAL_PK_STATE);
     expect(state.syringeRemainingMl).toBe(DEFAULT_CONFIG.syringeVolumeMax);
   });
 });

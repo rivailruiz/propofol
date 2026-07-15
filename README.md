@@ -8,6 +8,25 @@ Protótipo web mobile-first (landscape) de uma bomba de infusão alvo-controlada
 
 React + TypeScript + Vite + Tailwind CSS v4 + Zustand + Recharts + Lucide React + Vitest.
 
+## Modelo farmacocinético
+
+A simulação de Cp/Ce usa o modelo publicado de **Schnider** para propofol em
+adultos, com as covariáveis do "paciente virtual" (idade, peso, altura, sexo)
+configuráveis nas Configurações:
+
+- Schnider TW, Minto CF, Gambus PL, et al. "The influence of method of
+  administration and covariates on the pharmacokinetics of propofol in
+  adult volunteers." *Anesthesiology*. 1998;88(5):1170-1182. (V1–V3, Cl1–Cl3)
+- Schnider TW, Minto CF, Shafer SL, et al. "The influence of age on
+  propofol pharmacodynamics." *Anesthesiology*. 1999;90(6):1502-1516.
+  (ke0 = 0.456 min⁻¹)
+
+Ver [src/lib/pk.ts](src/lib/pk.ts) para a implementação e citações completas,
+e [src/lib/pk.test.ts](src/lib/pk.test.ts) para os testes que conferem os
+coeficientes derivados contra os valores publicados. Mesmo assim, isto
+continua sendo um simulador educacional — não é um dispositivo médico e não
+deve orientar decisões clínicas reais.
+
 ## Rodando localmente
 
 ```bash
