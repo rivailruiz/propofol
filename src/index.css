@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* Device chassis / panels */
+  --color-chassis-950: #0a0c10;
+  --color-chassis-900: #12151b;
+  --color-chassis-800: #1a1e27;
+  --color-chassis-700: #232834;
+  --color-chassis-600: #2d3341;
+  --color-chassis-500: #3a4152;
+  --color-chassis-border: #3a4152;
+
+  /* Semantic status colors */
+  --color-status-normal: #34d987;
+  --color-status-normal-dim: #16a34a;
+  --color-status-attention: #facc15;
+  --color-status-alarm: #f8485e;
+  --color-status-info: #38bdf8;
+  --color-status-idle: #6b7280;
+
+  --color-cpt: #34d987;
+  --color-cp: #38bdf8;
+  --color-ce: #c084fc;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    width: 100dvw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--color-chassis-950);
+    color: #e5e7eb;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .orientation-guard {
+    display: none;
+  }
+  .app-shell {
+    display: flex;
+  }
+  @media (orientation: portrait) and (max-width: 600px) {
+    .orientation-guard {
+      display: flex;
+    }
+    .app-shell {
+      display: none;
+    }
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
